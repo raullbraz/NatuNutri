@@ -17,23 +17,15 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const signIn = async (email, password) => {
-    try {
-      const response = await authService.login(email, password);
-      setUser(response.user);
-      localStorage.setItem('@NatuNutri:user', JSON.stringify(response.user));
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.login(email, password);
+    setUser(response.user);
+    localStorage.setItem('@NatuNutri:user', JSON.stringify(response.user));
   };
 
   const signUp = async (name, email, password) => {
-    try {
-      const response = await authService.register(name, email, password);
-      setUser(response.user);
-      localStorage.setItem('@NatuNutri:user', JSON.stringify(response.user));
-    } catch (error) {
-      throw error;
-    }
+    const response = await authService.register(name, email, password);
+    setUser(response.user);
+    localStorage.setItem('@NatuNutri:user', JSON.stringify(response.user));
   };
 
   const signOut = async () => {

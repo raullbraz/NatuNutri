@@ -1,4 +1,4 @@
-const API_URL = 'https://ep-odd-meadow-acui84xv.neonauth.sa-east-1.aws.neon.tech/neondb/auth';
+const API_URL = import.meta.env.VITE_NEON_AUTH_URL || 'https://ep-odd-meadow-acui84xv.neonauth.sa-east-1.aws.neon.tech/neondb/auth';
 
 export const login = async (email, password) => {
   const response = await fetch(`${API_URL}/sign-in/email`, {

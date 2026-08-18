@@ -7,7 +7,10 @@ export const getDb = () => {
     throw new Error('Usuário não autenticado');
   }
 
-  const dbUrl = `postgresql://authenticated:${token}@ep-odd-meadow-acui84xv-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require`;
+  const poolerHost = import.meta.env.VITE_NEON_POOLER_HOST || 'ep-odd-meadow-acui84xv-pooler.sa-east-1.aws.neon.tech';
+  const database = import.meta.env.VITE_NEON_DATABASE || 'neondb';
+  const dbUrl = `postgresql://authenticated:${token}@${poolerHost}/${database}?sslmode=require`;
   
   return neon(dbUrl);
 };
+
