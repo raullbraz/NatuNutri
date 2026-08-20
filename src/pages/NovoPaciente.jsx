@@ -299,10 +299,8 @@ export default function NovoPaciente() {
         ) RETURNING id;
       `;
 
-      const novoPacienteId = result[0]?.id;
-
-      // Redirecionar para o perfil do paciente recém-cadastrado com mensagem de sucesso
-      navigate(`/pacientes/${novoPacienteId}`, { 
+      // Redirecionar para a listagem de pacientes com mensagem de sucesso
+      navigate('/pacientes', { 
         state: { successMessage: 'Paciente cadastrado com sucesso!' } 
       });
 

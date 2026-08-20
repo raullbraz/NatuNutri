@@ -1,16 +1,27 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 import { getDb } from '../services/db';
 
 export default function Pacientes() {
   const { user } = useAuth();
+  const location = useLocation();
   const [pacientes, setPacientes] = useState([]);
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [toastMessage, setToastMessage] = useState(location.state?.successMessage || '');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (toastMessage) {
+      const timer = setTimeout(() => {
+        setToastMessage('');
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [toastMessage]);
 
   useEffect(() => {
     async function loadPacientes() {
@@ -79,6 +90,14 @@ export default function Pacientes() {
     <div className="app-layout">
       <Sidebar />
       <div className="main-content">
+        {toastMessage && (
+          <div className="toast-success">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            <span>{toastMessage}</span>
+            <button className="toast-close" onClick={() => setToastMessage('')}>×</button>
+          </div>
+        )}
+
         <header className="dashboard-header">
           <div>
             <h1 className="page-title">Pacientes</h1>
