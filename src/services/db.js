@@ -1,5 +1,7 @@
 import { neon } from '@neondatabase/serverless';
 
+const DATABASE_URL = import.meta.env.VITE_DATABASE_URL || 'postgresql://neondb_owner:npg_VkWsRvPLaM75@ep-odd-meadow-acui84xv-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+
 export const getDb = () => {
   const token = localStorage.getItem('neon_auth_token');
   
@@ -7,10 +9,6 @@ export const getDb = () => {
     throw new Error('Usuário não autenticado');
   }
 
-  const poolerHost = import.meta.env.VITE_NEON_POOLER_HOST || 'ep-odd-meadow-acui84xv-pooler.sa-east-1.aws.neon.tech';
-  const database = import.meta.env.VITE_NEON_DATABASE || 'neondb';
-  const dbUrl = `postgresql://authenticated:${token}@${poolerHost}/${database}?sslmode=require`;
-  
-  return neon(dbUrl);
+  return neon(DATABASE_URL);
 };
 

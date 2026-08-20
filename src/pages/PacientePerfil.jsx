@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link, useLocation } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 import { getDb } from '../services/db';
 
 export default function PacientePerfil() {
+  const { user } = useAuth();
   const { id } = useParams();
   const location = useLocation();
   const [paciente, setPaciente] = useState(null);
@@ -22,13 +24,17 @@ export default function PacientePerfil() {
 
   useEffect(() => {
     async function loadPaciente() {
+      if (!id || !user?.id) return;
       try {
         setLoading(true);
         setError('');
         const sql = getDb();
 
         const result = await sql`
-          SELECT * FROM pacientes WHERE id = ${id}::uuid LIMIT 1;
+          SELECT * FROM pacientes 
+          WHERE id = ${id}::uuid 
+            AND nutricionista_id = ${user.id} 
+          LIMIT 1;
         `;
 
         if (result.length > 0) {
@@ -45,7 +51,7 @@ export default function PacientePerfil() {
     }
 
     loadPaciente();
-  }, [id]);
+  }, [id, user?.id]);
 
   const calcularIdade = (dataNasc) => {
     if (!dataNasc) return null;

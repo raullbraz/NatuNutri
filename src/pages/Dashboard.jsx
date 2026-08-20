@@ -15,29 +15,35 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function loadData() {
+      if (!user?.id) return;
       try {
         const sql = getDb();
         
-        // As políticas de RLS garantem que só vejamos os dados do nutricionista logado
-        
         const [pacientesResult, consultasResult, semRetornoResult] = await Promise.all([
-          sql`SELECT count(*) as total FROM pacientes;`,
-          sql`SELECT count(*) as total FROM consultas WHERE data_consulta >= date_trunc('week', current_date);`,
+          sql`SELECT count(*) as total FROM pacientes WHERE nutricionista_id = ${user.id};`,
+          sql`
+            SELECT count(*) as total 
+            FROM consultas c
+            JOIN pacientes p ON p.id = c.paciente_id
+            WHERE p.nutricionista_id = ${user.id} 
+              AND c.data_consulta >= date_trunc('week', current_date);
+          `,
           sql`
             SELECT id, nome 
             FROM pacientes 
-            WHERE id NOT IN (
-              SELECT paciente_id 
-              FROM consultas 
-              WHERE data_consulta >= CURRENT_DATE - INTERVAL '30 days' 
-                 OR proximo_retorno >= CURRENT_DATE
-            )
+            WHERE nutricionista_id = ${user.id}
+              AND id NOT IN (
+                SELECT paciente_id 
+                FROM consultas 
+                WHERE data_consulta >= CURRENT_DATE - INTERVAL '30 days' 
+                   OR proximo_retorno >= CURRENT_DATE
+              )
           `
         ]);
 
-        setTotalPacientes(Number(pacientesResult[0].total));
-        setConsultasSemana(Number(consultasResult[0].total));
-        setPacientesSemRetorno(semRetornoResult);
+        setTotalPacientes(Number(pacientesResult[0]?.total || 0));
+        setConsultasSemana(Number(consultasResult[0]?.total || 0));
+        setPacientesSemRetorno(semRetornoResult || []);
       } catch (err) {
         console.error("Erro ao carregar dados do painel", err);
       } finally {
@@ -46,7 +52,7 @@ export default function Dashboard() {
     }
 
     loadData();
-  }, []);
+  }, [user?.id]);
 
   const handleLogout = async () => {
     await signOut();

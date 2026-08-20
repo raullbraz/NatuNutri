@@ -1,9 +1,11 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import Sidebar from '../components/Sidebar';
 import { getDb } from '../services/db';
 
 export default function Pacientes() {
+  const { user } = useAuth();
   const [pacientes, setPacientes] = useState([]);
   const [busca, setBusca] = useState('');
   const [loading, setLoading] = useState(true);
@@ -12,6 +14,7 @@ export default function Pacientes() {
 
   useEffect(() => {
     async function loadPacientes() {
+      if (!user?.id) return;
       try {
         setLoading(true);
         setError('');
@@ -29,6 +32,7 @@ export default function Pacientes() {
             MAX(c.data_consulta) as ultima_consulta
           FROM pacientes p
           LEFT JOIN consultas c ON c.paciente_id = p.id
+          WHERE p.nutricionista_id = ${user.id}
           GROUP BY p.id, p.nome, p.email, p.whatsapp, p.objetivos, p.objetivo_texto, p.created_at
           ORDER BY p.nome ASC;
         `;
@@ -43,7 +47,7 @@ export default function Pacientes() {
     }
 
     loadPacientes();
-  }, []);
+  }, [user?.id]);
 
   // Filtragem de pacientes por nome
   const pacientesFiltrados = useMemo(() => {
