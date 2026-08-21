@@ -1,6 +1,10 @@
-const API_URL = import.meta.env.VITE_NEON_AUTH_URL || 'https://ep-odd-meadow-acui84xv.neonauth.sa-east-1.aws.neon.tech/neondb/auth';
+const API_URL = import.meta.env.VITE_NEON_AUTH_URL;
 
 export const login = async (email, password) => {
+  if (!API_URL) {
+    throw new Error('Configuração ausente: VITE_NEON_AUTH_URL não está definida nas variáveis de ambiente.');
+  }
+
   const response = await fetch(`${API_URL}/sign-in/email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -18,6 +22,10 @@ export const login = async (email, password) => {
 };
 
 export const register = async (name, email, password) => {
+  if (!API_URL) {
+    throw new Error('Configuração ausente: VITE_NEON_AUTH_URL não está definida nas variáveis de ambiente.');
+  }
+
   const response = await fetch(`${API_URL}/sign-up/email`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -38,13 +46,16 @@ export const logout = async () => {
   const token = localStorage.getItem('neon_auth_token');
   if (!token) return;
 
-  await fetch(`${API_URL}/sign-out`, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    }
-  }).catch(() => {}); // Ignora erros de rede no logout
+  if (API_URL) {
+    await fetch(`${API_URL}/sign-out`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    }).catch(() => {}); // Ignora erros de rede no logout
+  }
 
   localStorage.removeItem('neon_auth_token');
 };
+

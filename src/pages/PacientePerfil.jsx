@@ -181,6 +181,25 @@ export default function PacientePerfil() {
     }
   }, [toastMessage]);
 
+  // Helper para calcular idade a partir de uma data
+  const calcularIdade = (dataStr) => {
+    if (!dataStr) return null;
+    try {
+      const nasc = new Date(dataStr);
+      if (isNaN(nasc.getTime())) return null;
+
+      const hoje = new Date();
+      let idade = hoje.getFullYear() - nasc.getFullYear();
+      const mes = hoje.getMonth() - nasc.getMonth();
+      if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+        idade--;
+      }
+      return idade >= 0 ? idade : null;
+    } catch {
+      return null;
+    }
+  };
+
   // Carregar dados do paciente
   const loadPaciente = async () => {
     if (!id) return;
@@ -193,14 +212,14 @@ export default function PacientePerfil() {
       if (user?.id) {
         result = await sql`
           SELECT * FROM pacientes 
-          WHERE id = ${id}::uuid 
-            AND (nutricionista_id = ${user.id}::uuid OR nutricionista_id IS NULL)
+          WHERE id = ${id} 
+            AND (nutricionista_id = ${user.id} OR nutricionista_id IS NULL)
           LIMIT 1;
         `;
       } else {
         result = await sql`
           SELECT * FROM pacientes 
-          WHERE id = ${id}::uuid 
+          WHERE id = ${id} 
           LIMIT 1;
         `;
       }
@@ -272,7 +291,7 @@ export default function PacientePerfil() {
       const sql = getDb();
       const result = await sql`
         SELECT * FROM consultas 
-        WHERE paciente_id = ${id}::uuid 
+        WHERE paciente_id = ${id} 
         ORDER BY data_consulta DESC, created_at DESC;
       `;
       setConsultas(result || []);
@@ -292,7 +311,7 @@ export default function PacientePerfil() {
       const sql = getDb();
       const result = await sql`
         SELECT * FROM planos_alimentares 
-        WHERE paciente_id = ${id}::uuid 
+        WHERE paciente_id = ${id} 
         ORDER BY created_at DESC;
       `;
       setPlanos(result || []);
@@ -312,21 +331,7 @@ export default function PacientePerfil() {
 
   // Idade calculada
   const idadeCalculada = useMemo(() => {
-    if (!dataNascimento) return null;
-    try {
-      const nasc = new Date(dataNascimento);
-      if (isNaN(nasc.getTime())) return null;
-
-      const hoje = new Date();
-      let idade = hoje.getFullYear() - nasc.getFullYear();
-      const mes = hoje.getMonth() - nasc.getMonth();
-      if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
-        idade--;
-      }
-      return idade >= 0 ? idade : null;
-    } catch {
-      return null;
-    }
+    return calcularIdade(dataNascimento);
   }, [dataNascimento]);
 
   // IMC dinâmico
@@ -483,7 +488,7 @@ export default function PacientePerfil() {
           atividade_fisica = ${praticaAtividade},
           atividade_fisica_descricao = ${praticaAtividade ? atividadeDescricao.trim() : null},
           observacoes = ${observacoes.trim() || null}
-        WHERE id = ${id}::uuid;
+        WHERE id = ${id};
       `;
 
       await loadPaciente();
@@ -525,7 +530,7 @@ export default function PacientePerfil() {
           observacoes,
           proximo_retorno
         ) VALUES (
-          ${id}::uuid,
+          ${id},
           ${novaConsultaData},
           ${parseFloat(novaConsultaPeso)},
           ${novaConsultaCintura ? parseFloat(novaConsultaCintura) : null},
