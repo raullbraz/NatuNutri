@@ -31,6 +31,7 @@ body {
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -48,6 +49,75 @@ a:hover {
 .app-layout {
   display: flex;
   min-height: 100vh;
+  position: relative;
+  width: 100%;
+}
+
+/* Mobile Topbar (< 1024px) */
+.mobile-topbar {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  position: sticky;
+  top: 0;
+  z-index: 900;
+  height: 60px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.mobile-menu-btn {
+  background: none;
+  border: none;
+  color: var(--color-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.mobile-menu-btn:hover {
+  background-color: rgba(46, 125, 50, 0.08);
+}
+
+.mobile-brand .auth-logo {
+  font-size: 22px;
+  margin-bottom: 0;
+}
+
+.mobile-user-badge {
+  display: flex;
+  align-items: center;
+}
+
+.mobile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #43a047);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.25);
+}
+
+/* Backdrop para fechar sidebar no mobile */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 998;
+  animation: fadeIn 0.2s ease-out;
 }
 
 /* Sidebar */
@@ -57,14 +127,22 @@ a:hover {
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  z-index: 999;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow-y: auto;
+  flex-shrink: 0;
 }
 
 .sidebar-header {
-  padding: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
-  min-height: 88px;
+  justify-content: space-between;
+  min-height: 80px;
 }
 
 .sidebar-header .auth-logo {
@@ -73,11 +151,31 @@ a:hover {
   font-size: 24px;
 }
 
+.sidebar-close-btn {
+  display: none;
+  background: none;
+  border: none;
+  color: var(--color-text-light);
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.sidebar-close-btn:hover {
+  background-color: #f0f0f0;
+  color: var(--color-text);
+}
+
 .sidebar-nav {
   padding: 24px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
 .sidebar-link {
@@ -85,9 +183,11 @@ a:hover {
   align-items: center;
   gap: 12px;
   padding: 12px 16px;
+  min-height: 44px;
   border-radius: 8px;
   color: var(--color-text-light);
   font-weight: 500;
+  font-size: 15px;
   transition: var(--transition);
 }
 
@@ -100,6 +200,84 @@ a:hover {
   background-color: rgba(46, 125, 50, 0.1);
   color: var(--color-primary);
   font-weight: 600;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background-color: #fafbfa;
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sidebar-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-primary), #43a047);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(46, 125, 50, 0.2);
+}
+
+.sidebar-user-text {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-email {
+  font-size: 11px;
+  color: var(--color-text-light);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  min-height: 42px;
+  border-radius: 8px;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-light);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.sidebar-logout-btn:hover {
+  background-color: var(--color-error-bg);
+  color: var(--color-error);
+  border-color: var(--color-error-bg);
 }
 
 /* Main Content */
@@ -2295,20 +2473,492 @@ a:hover {
   }
 }
 
-@media (max-width: 600px) {
-  .pwa-install-banner {
-    left: 16px;
-    right: 16px;
-    bottom: 16px;
-    width: auto;
+/* ==========================================================================
+   RESPONSIVE DESIGN & MOBILE BREAKPOINTS (promptdr.md)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. LAPTOP & TABLET HORIZONTAL (<= 1024px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 1024px) {
+  .app-layout {
+    flex-direction: column;
   }
-  .pwa-update-banner {
-    width: 92%;
-    padding: 10px 14px;
+
+  .mobile-topbar {
+    display: flex;
+  }
+
+  .sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    width: 280px;
+    max-width: 85vw;
+    height: 100vh;
+    z-index: 1000;
+    transform: translateX(-100%);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: flex;
+  }
+
+  .main-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .dashboard-header {
+    padding: 16px 24px;
+    min-height: 72px;
+  }
+
+  .dashboard-content {
+    padding: 24px;
+  }
+
+  .perfil-sections-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .form-grid-3 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   2. TABLET VERTICAL & SMARTPHONES (<= 768px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Tipografia & Cabeçalhos */
+  .page-title {
+    font-size: 20px;
+  }
+
+  .page-subtitle {
+    font-size: 13px;
+  }
+
+  .dashboard-header {
+    padding: 16px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    min-height: auto;
+  }
+
+  .dashboard-header > div {
+    width: 100%;
+  }
+
+  .dashboard-header .btn-primary-action,
+  .dashboard-header .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .dashboard-header .btn-logout {
+    display: none; /* Já disponível no menu mobile */
+  }
+
+  .dashboard-content {
+    padding: 16px;
+  }
+
+  /* Dashboard Grid */
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dashboard-card.wide {
+    grid-column: span 1;
+  }
+
+  .dashboard-card {
+    padding: 18px;
+  }
+
+  .card-value {
+    font-size: 28px;
+  }
+
+  /* Barra de Busca de Pacientes */
+  .search-bar-container {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
   }
+
+  .search-input-wrapper {
+    width: 100%;
+  }
+
+  .patient-count-badge {
+    align-self: flex-start;
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  /* Tabela de Pacientes Convertida em Cards */
+  .pacientes-table-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+
+  .pacientes-table-header {
+    display: none;
+  }
+
+  .pacientes-list {
+    gap: 10px;
+  }
+
+  .paciente-row {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 16px;
+    position: relative;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
+    background-color: var(--color-surface);
+  }
+
+  .paciente-row:hover {
+    transform: none;
+  }
+
+  .col-paciente {
+    padding-right: 36px;
+  }
+
+  .col-action {
+    position: absolute;
+    right: 14px;
+    top: 18px;
+  }
+
+  .col-objetivo {
+    width: 100%;
+    padding-top: 4px;
+  }
+
+  .objetivo-tags {
+    flex-wrap: wrap;
+  }
+
+  .col-consulta {
+    width: 100%;
+    border-top: 1px solid #f0f4f0;
+    padding-top: 10px;
+    margin-top: 2px;
+  }
+
+  .consulta-date-info {
+    font-size: 12px;
+    color: var(--color-text-light);
+  }
+
+  /* Abas com Scroll Horizontal Touch */
+  .tabs-header {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .tabs-header::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tab-btn {
+    flex: 0 0 auto;
+    padding: 14px 18px;
+    font-size: 14px;
+  }
+
+  .section-tabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 4px;
+  }
+
+  .section-tabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-tab-btn {
+    flex: 0 0 auto;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .subtabs-nav {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    gap: 4px;
+  }
+
+  .subtabs-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .subtab-btn {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  /* Formulários */
+  .patient-form {
+    padding: 20px 16px;
+  }
+
+  .form-grid-2,
+  .form-grid-3 {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .form-actions-tabs {
+    flex-direction: column-reverse;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+  }
+
+  .form-actions-tabs button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-actions-footer {
+    margin-top: 24px;
+    padding-top: 16px;
+  }
+
+  .btn-save-paciente {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chip-add-inline,
+  .add-extra-wrapper {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .btn-inline-add,
+  .btn-add-extra {
+    padding: 12px 16px;
+    text-align: center;
+    width: 100%;
+  }
+
+  /* Perfil do Paciente */
+  .perfil-hero-card {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 18px;
+    padding: 18px 16px;
+  }
+
+  .perfil-hero-left {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .perfil-hero-details h2 {
+    font-size: 20px;
+  }
+
+  .perfil-quick-metrics {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .metric-pill {
+    min-width: unset;
+    padding: 8px 12px;
+  }
+
+  .section-content-card {
+    padding: 18px 14px;
+  }
+
+  .consultas-section-header,
+  .planos-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .consultas-section-header button,
+  .planos-section-header button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .chart-card .chart-body {
+    padding: 14px;
+  }
+
+  .chart-title-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .chart-legend-metrics {
+    width: 100%;
+  }
+
+  .consultas-list-card {
+    padding: 16px;
+  }
+
+  .detail-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .detail-value {
+    max-width: 100%;
+    text-align: left;
+  }
+
+  /* Modais */
+  .modal-backdrop {
+    padding: 12px;
+  }
+
+  .modal-container {
+    width: 100%;
+    max-height: 92vh;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 16px;
+  }
+
+  .modal-body {
+    padding: 16px;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+
+  .modal-footer button {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Telas de Autenticação */
+  .auth-container {
+    padding: 16px;
+  }
+
+  .auth-card {
+    padding: 28px 20px;
+    border-radius: 12px;
+  }
+
+  .auth-header {
+    margin-bottom: 22px;
+  }
+
+  .auth-logo {
+    font-size: 24px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   3. SMARTPHONES COMPACTOS (<= 480px)
+   -------------------------------------------------------------------------- */
+@media (max-width: 480px) {
+  .perfil-quick-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .auth-card {
+    padding: 24px 16px;
+  }
+
+  .btn-primary,
+  .btn-primary-action,
+  .btn-secondary,
+  .btn-save-paciente,
+  .btn-primary-tab,
+  .btn-secondary-tab {
+    min-height: 48px;
+    font-size: 15px;
+  }
+
+  .form-input,
+  .form-select,
+  .form-input-custom,
+  .form-textarea-custom {
+    min-height: 44px;
+    font-size: 15px;
+  }
+
+  .chip-btn {
+    min-height: 38px;
+    padding: 8px 14px;
+  }
+
+  .toast-success {
+    left: 14px;
+    right: 14px;
+    top: 14px;
+    width: auto;
+    font-size: 13px;
+    padding: 12px 16px;
+  }
+
+  .pwa-install-banner {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+    padding: 14px 16px;
+  }
+
+  .pwa-update-banner {
+    width: 94%;
+    padding: 10px 12px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
   .btn-pwa-update {
     text-align: center;
   }
