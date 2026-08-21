@@ -7,6 +7,7 @@ import Dashboard from './pages/Dashboard';
 import Pacientes from './pages/Pacientes';
 import NovoPaciente from './pages/NovoPaciente';
 import PacientePerfil from './pages/PacientePerfil';
+import PWAInstallPrompt from './components/PWAInstallPrompt';
 import './index.css';
 
 class ErrorBoundary extends React.Component {
@@ -121,6 +122,7 @@ const AuthRoute = ({ children }) => {
 function App() {
   return (
     <ErrorBoundary>
+      <PWAInstallPrompt />
       <Routes>
         <Route path="/" element={<Navigate to="/login" />} />
         
