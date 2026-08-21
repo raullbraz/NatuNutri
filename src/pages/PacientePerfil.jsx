@@ -125,7 +125,7 @@ export default function PacientePerfil() {
     'Frutos do mar'
   ];
 
-  // Helper robusto para converter array/json do PostgreSQL
+  // Helper para converter array/json do PostgreSQL de forma segura
   const toArray = (val) => {
     if (!val) return [];
     if (Array.isArray(val)) return val;
@@ -139,7 +139,7 @@ export default function PacientePerfil() {
     return [];
   };
 
-  // Helper seguro para formatar data para inputs type="date"
+  // Helper para formatar data para inputs type="date"
   const formatDateForInput = (dateVal) => {
     if (!dateVal) return '';
     try {
@@ -152,7 +152,7 @@ export default function PacientePerfil() {
     }
   };
 
-  // Helper seguro para exibir data formatada PT-BR
+  // Helper para exibir data formatada PT-BR
   const formatarData = (dataStr) => {
     if (!dataStr) return 'Não informada';
     try {
@@ -194,7 +194,7 @@ export default function PacientePerfil() {
         result = await sql`
           SELECT * FROM pacientes 
           WHERE id = ${id}::uuid 
-            AND (nutricionista_id = ${user.id}::uuid OR nutricionista_id = ${user.id} OR nutricionista_id IS NULL)
+            AND (nutricionista_id = ${user.id}::uuid OR nutricionista_id IS NULL)
           LIMIT 1;
         `;
       } else {
@@ -254,7 +254,7 @@ export default function PacientePerfil() {
         setObservacoes(p.observacoes || '');
 
       } else {
-        setError('Paciente não encontrado.');
+        setError('Paciente não encontrado ou não pertence a este consultório.');
       }
     } catch (err) {
       console.error('Erro ao carregar perfil do paciente:', err);
@@ -602,7 +602,9 @@ export default function PacientePerfil() {
     const height = 220;
     const padding = { top: 25, right: 35, bottom: 40, left: 55 };
 
-    const pesos = chartPoints.map(p => p.peso);
+    const pesos = chartPoints.map(p => p.peso).filter(p => !isNaN(p));
+    if (pesos.length === 0) return null;
+
     const minPeso = Math.floor(Math.min(...pesos) - 2);
     const maxPeso = Math.ceil(Math.max(...pesos) + 2);
     const rangePeso = maxPeso - minPeso || 1;
@@ -615,7 +617,7 @@ export default function PacientePerfil() {
         ? padding.left + innerWidth / 2 
         : padding.left + (i / (chartPoints.length - 1)) * innerWidth;
       const y = padding.top + innerHeight - ((pt.peso - minPeso) / rangePeso) * innerHeight;
-      return { ...pt, x, y };
+      return { ...pt, x: isNaN(x) ? padding.left : x, y: isNaN(y) ? padding.top : y };
     });
 
     // Path da linha
@@ -693,7 +695,7 @@ export default function PacientePerfil() {
           ) : !paciente ? (
             <div className="empty-state-card">
               <h2>Paciente não encontrado</h2>
-              <p>O paciente solicitado não foi encontrado ou não está disponível.</p>
+              <p>O paciente solicitado não foi encontrado ou não está cadastrado em seu consultório.</p>
               <Link to="/pacientes" className="btn-primary-action" style={{ marginTop: '16px' }}>
                 Voltar para Lista de Pacientes
               </Link>
