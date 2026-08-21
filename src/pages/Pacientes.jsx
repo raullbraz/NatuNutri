@@ -51,7 +51,7 @@ export default function Pacientes() {
         setPacientes(result);
       } catch (err) {
         console.error('Erro ao carregar pacientes:', err);
-        setError('Não foi possível carregar a lista de pacientes.');
+        setError(err.message || 'Não foi possível carregar a lista de pacientes.');
       } finally {
         setLoading(false);
       }
