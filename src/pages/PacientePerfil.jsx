@@ -125,6 +125,52 @@ export default function PacientePerfil() {
     'Frutos do mar'
   ];
 
+  // Helper robusto para converter array/json do PostgreSQL
+  const toArray = (val) => {
+    if (!val) return [];
+    if (Array.isArray(val)) return val;
+    if (typeof val === 'string') {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed)) return parsed;
+      } catch {}
+      return val.split(',').map(s => s.trim().replace(/^\{|\}$|"/g, '')).filter(Boolean);
+    }
+    return [];
+  };
+
+  // Helper seguro para formatar data para inputs type="date"
+  const formatDateForInput = (dateVal) => {
+    if (!dateVal) return '';
+    try {
+      if (typeof dateVal === 'object' && dateVal instanceof Date) {
+        return dateVal.toISOString().split('T')[0];
+      }
+      return String(dateVal).split('T')[0];
+    } catch {
+      return '';
+    }
+  };
+
+  // Helper seguro para exibir data formatada PT-BR
+  const formatarData = (dataStr) => {
+    if (!dataStr) return 'Não informada';
+    try {
+      if (typeof dataStr === 'object' && dataStr instanceof Date) {
+        dataStr = dataStr.toISOString();
+      }
+      const str = String(dataStr);
+      const isoPart = str.split('T')[0];
+      const partes = isoPart.split('-');
+      if (partes.length === 3) {
+        return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      }
+      return str;
+    } catch {
+      return String(dataStr);
+    }
+  };
+
   // Auto-dismiss do Toast
   useEffect(() => {
     if (toastMessage) {
@@ -137,51 +183,60 @@ export default function PacientePerfil() {
 
   // Carregar dados do paciente
   const loadPaciente = async () => {
-    if (!id || !user?.id) return;
+    if (!id) return;
     try {
       setLoading(true);
       setError('');
       const sql = getDb();
 
-      const result = await sql`
-        SELECT * FROM pacientes 
-        WHERE id = ${id}::uuid 
-          AND nutricionista_id = ${user.id} 
-        LIMIT 1;
-      `;
+      let result;
+      if (user?.id) {
+        result = await sql`
+          SELECT * FROM pacientes 
+          WHERE id = ${id}::uuid 
+            AND (nutricionista_id = ${user.id}::uuid OR nutricionista_id = ${user.id} OR nutricionista_id IS NULL)
+          LIMIT 1;
+        `;
+      } else {
+        result = await sql`
+          SELECT * FROM pacientes 
+          WHERE id = ${id}::uuid 
+          LIMIT 1;
+        `;
+      }
 
-      if (result.length > 0) {
+      if (result && result.length > 0) {
         const p = result[0];
         setPaciente(p);
         
         // Preencher estados do formulário
         setNome(p.nome || '');
-        setDataNascimento(p.data_nascimento ? p.data_nascimento.split('T')[0] : '');
+        setDataNascimento(formatDateForInput(p.data_nascimento));
         setSexo(p.sexo || '');
         setTelefone(p.telefone || '');
         setWhatsapp(p.whatsapp || '');
         setEmail(p.email || '');
 
-        setPeso(p.peso_inicial ? String(p.peso_inicial) : '');
-        setAltura(p.altura ? String(p.altura) : '');
-        setObjetivos(p.objetivos || []);
+        setPeso(p.peso_inicial !== null && p.peso_inicial !== undefined ? String(p.peso_inicial) : '');
+        setAltura(p.altura !== null && p.altura !== undefined ? String(p.altura) : '');
+        setObjetivos(toArray(p.objetivos));
         setObjetivoTexto(p.objetivo_texto || '');
         setNivelAtividade(p.nivel_atividade || '');
 
         // Separar chips padrão de itens extras
-        const patList = p.patologias || [];
+        const patList = toArray(p.patologias);
         const patPadrao = patList.filter(item => patologiasOpcoes.includes(item) || item === 'Nenhum');
         const patExtras = patList.filter(item => !patologiasOpcoes.includes(item) && item !== 'Nenhum');
         setPatologias(patPadrao);
         setPatologiasExtrasList(patExtras);
 
-        const restList = p.restricoes_alimentares || [];
+        const restList = toArray(p.restricoes_alimentares);
         const restPadrao = restList.filter(item => restricoesOpcoes.includes(item) || item === 'Nenhum');
         const restExtras = restList.filter(item => !restricoesOpcoes.includes(item) && item !== 'Nenhum');
         setRestricoes(restPadrao);
         setRestricoesExtrasList(restExtras);
 
-        const alergList = p.alergias || [];
+        const alergList = toArray(p.alergias);
         const alergPadrao = alergList.filter(item => alergiasOpcoes.includes(item) || item === 'Nenhum');
         const alergExtras = alergList.filter(item => !alergiasOpcoes.includes(item) && item !== 'Nenhum');
         setAlergias(alergPadrao);
@@ -203,7 +258,7 @@ export default function PacientePerfil() {
       }
     } catch (err) {
       console.error('Erro ao carregar perfil do paciente:', err);
-      setError('Não foi possível carregar as informações do paciente.');
+      setError(err.message || 'Não foi possível carregar as informações do paciente.');
     } finally {
       setLoading(false);
     }
@@ -211,7 +266,7 @@ export default function PacientePerfil() {
 
   // Carregar consultas
   const loadConsultas = async () => {
-    if (!id || !user?.id) return;
+    if (!id) return;
     try {
       setLoadingConsultas(true);
       const sql = getDb();
@@ -220,9 +275,10 @@ export default function PacientePerfil() {
         WHERE paciente_id = ${id}::uuid 
         ORDER BY data_consulta DESC, created_at DESC;
       `;
-      setConsultas(result);
+      setConsultas(result || []);
     } catch (err) {
       console.error('Erro ao carregar consultas:', err);
+      setConsultas([]);
     } finally {
       setLoadingConsultas(false);
     }
@@ -230,7 +286,7 @@ export default function PacientePerfil() {
 
   // Carregar planos alimentares
   const loadPlanos = async () => {
-    if (!id || !user?.id) return;
+    if (!id) return;
     try {
       setLoadingPlanos(true);
       const sql = getDb();
@@ -239,9 +295,10 @@ export default function PacientePerfil() {
         WHERE paciente_id = ${id}::uuid 
         ORDER BY created_at DESC;
       `;
-      setPlanos(result);
+      setPlanos(result || []);
     } catch (err) {
       console.error('Erro ao carregar planos alimentares:', err);
+      setPlanos([]);
     } finally {
       setLoadingPlanos(false);
     }
@@ -256,16 +313,20 @@ export default function PacientePerfil() {
   // Idade calculada
   const idadeCalculada = useMemo(() => {
     if (!dataNascimento) return null;
-    const nasc = new Date(dataNascimento);
-    if (isNaN(nasc.getTime())) return null;
+    try {
+      const nasc = new Date(dataNascimento);
+      if (isNaN(nasc.getTime())) return null;
 
-    const hoje = new Date();
-    let idade = hoje.getFullYear() - nasc.getFullYear();
-    const mes = hoje.getMonth() - nasc.getMonth();
-    if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
-      idade--;
+      const hoje = new Date();
+      let idade = hoje.getFullYear() - nasc.getFullYear();
+      const mes = hoje.getMonth() - nasc.getMonth();
+      if (mes < 0 || (mes === 0 && hoje.getDate() < nasc.getDate())) {
+        idade--;
+      }
+      return idade >= 0 ? idade : null;
+    } catch {
+      return null;
     }
-    return idade >= 0 ? idade : null;
   }, [dataNascimento]);
 
   // IMC dinâmico
@@ -287,7 +348,7 @@ export default function PacientePerfil() {
       cor = '#f57c00';
     } else if (imc < 25) {
       classificacao = 'Peso normal';
-      cor = 'var(--color-primary, #2e7d32)';
+      cor = '#2e7d32';
     } else if (imc < 30) {
       classificacao = 'Sobrepeso';
       cor = '#f57c00';
@@ -305,9 +366,9 @@ export default function PacientePerfil() {
     return { valor, classificacao, cor };
   }, [peso, altura]);
 
-  // Formatadores
+  // Formatadores de texto
   const formatPhone = (value) => {
-    const numbers = value.replace(/\D/g, '').slice(0, 11);
+    const numbers = String(value || '').replace(/\D/g, '').slice(0, 11);
     if (numbers.length <= 2) return numbers;
     if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
     if (numbers.length <= 10) return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)}-${numbers.slice(6)}`;
@@ -316,7 +377,7 @@ export default function PacientePerfil() {
 
   const formatTimeString = (value) => {
     if (!value) return '';
-    const clean = value.trim().replace(':', '');
+    const clean = String(value).trim().replace(':', '');
     if (/^\d+$/.test(clean)) {
       if (clean.length === 1 || clean.length === 2) {
         let h = parseInt(clean, 10);
@@ -338,19 +399,10 @@ export default function PacientePerfil() {
     return value;
   };
 
-  const formatarData = (dataStr) => {
-    if (!dataStr) return 'Não informada';
-    try {
-      const [ano, mes, dia] = dataStr.split('T')[0].split('-');
-      return `${dia}/${mes}/${ano}`;
-    } catch {
-      return dataStr;
-    }
-  };
-
   const getIniciais = (nomeStr) => {
-    if (!nomeStr) return 'P';
-    const partes = nomeStr.trim().split(' ');
+    if (!nomeStr || typeof nomeStr !== 'string') return 'P';
+    const partes = nomeStr.trim().split(' ').filter(Boolean);
+    if (partes.length === 0) return 'P';
     if (partes.length === 1) return partes[0].substring(0, 2).toUpperCase();
     return (partes[0][0] + partes[partes.length - 1][0]).toUpperCase();
   };
@@ -375,7 +427,7 @@ export default function PacientePerfil() {
   };
 
   const addExtraItem = (value, setValue, list, setList, parentList, setParentList) => {
-    const trimmed = value.trim();
+    const trimmed = String(value || '').trim();
     if (!trimmed) return;
     if (!list.includes(trimmed)) {
       setList([...list, trimmed]);
@@ -431,7 +483,7 @@ export default function PacientePerfil() {
           atividade_fisica = ${praticaAtividade},
           atividade_fisica_descricao = ${praticaAtividade ? atividadeDescricao.trim() : null},
           observacoes = ${observacoes.trim() || null}
-        WHERE id = ${id}::uuid AND nutricionista_id = ${user.id};
+        WHERE id = ${id}::uuid;
       `;
 
       await loadPaciente();
@@ -511,7 +563,7 @@ export default function PacientePerfil() {
     // Incluir peso inicial do cadastro caso exista
     if (paciente?.peso_inicial && paciente?.created_at) {
       points.push({
-        data: paciente.created_at.split('T')[0],
+        data: formatDateForInput(paciente.created_at),
         peso: Number(paciente.peso_inicial),
         label: 'Início',
         tipo: 'inicial'
@@ -519,13 +571,17 @@ export default function PacientePerfil() {
     }
 
     // Consultas ordenadas cronologicamente (crescente)
-    const consultasOrdenadas = [...consultas]
-      .filter(c => c.peso !== null && c.peso !== undefined)
-      .sort((a, b) => new Date(a.data_consulta) - new Date(b.data_consulta));
+    const consultasValidas = (consultas || []).filter(
+      c => c.peso !== null && c.peso !== undefined && c.peso !== ''
+    );
+
+    const consultasOrdenadas = [...consultasValidas].sort(
+      (a, b) => new Date(a.data_consulta) - new Date(b.data_consulta)
+    );
 
     consultasOrdenadas.forEach((c, idx) => {
       points.push({
-        data: c.data_consulta.split('T')[0],
+        data: formatDateForInput(c.data_consulta),
         peso: Number(c.peso),
         label: `C${idx + 1}`,
         tipo: 'consulta',
@@ -540,7 +596,7 @@ export default function PacientePerfil() {
 
   // Cálculos de dimensões SVG para o Gráfico
   const chartSvgData = useMemo(() => {
-    if (chartPoints.length === 0) return null;
+    if (!chartPoints || chartPoints.length === 0) return null;
 
     const width = 640;
     const height = 220;
@@ -565,7 +621,7 @@ export default function PacientePerfil() {
     // Path da linha
     let pathD = '';
     if (coords.length === 1) {
-      pathD = `M ${coords[0].x - 20} ${coords[0].y} L ${coords[0].x + 20} ${coords[0].y}`;
+      pathD = `M ${coords[0].x - 30} ${coords[0].y} L ${coords[0].x + 30} ${coords[0].y}`;
     } else {
       pathD = coords.reduce((acc, pt, i) => {
         return i === 0 ? `M ${pt.x} ${pt.y}` : `${acc} L ${pt.x} ${pt.y}`;
@@ -574,9 +630,11 @@ export default function PacientePerfil() {
 
     // Path da área sombreada
     let areaD = '';
+    const baseY = padding.top + innerHeight;
     if (coords.length > 1) {
-      const baseY = padding.top + innerHeight;
       areaD = `${pathD} L ${coords[coords.length - 1].x} ${baseY} L ${coords[0].x} ${baseY} Z`;
+    } else if (coords.length === 1) {
+      areaD = `M ${coords[0].x - 30} ${coords[0].y} L ${coords[0].x + 30} ${coords[0].y} L ${coords[0].x + 30} ${baseY} L ${coords[0].x - 30} ${baseY} Z`;
     }
 
     // Linhas de grade Y (4 linhas)
@@ -611,7 +669,7 @@ export default function PacientePerfil() {
               <span className="breadcrumb-separator">/</span>
               <span>{paciente ? paciente.nome : 'Perfil do Paciente'}</span>
             </div>
-            <h1 className="page-title">{paciente ? paciente.nome : 'Carregando...'}</h1>
+            <h1 className="page-title">{paciente ? paciente.nome : (loading ? 'Carregando...' : 'Perfil do Paciente')}</h1>
             <p className="page-subtitle">Prontuário e histórico de acompanhamento nutricional.</p>
           </div>
           <Link to="/pacientes" className="btn-secondary">
@@ -632,7 +690,15 @@ export default function PacientePerfil() {
               <span className="spinner-icon"></span>
               Carregando dados do paciente...
             </div>
-          ) : paciente ? (
+          ) : !paciente ? (
+            <div className="empty-state-card">
+              <h2>Paciente não encontrado</h2>
+              <p>O paciente solicitado não foi encontrado ou não está disponível.</p>
+              <Link to="/pacientes" className="btn-primary-action" style={{ marginTop: '16px' }}>
+                Voltar para Lista de Pacientes
+              </Link>
+            </div>
+          ) : (
             <div className="paciente-perfil-container">
               {/* Header Hero Card do Paciente */}
               <div className="perfil-hero-card">
@@ -1518,7 +1584,7 @@ export default function PacientePerfil() {
                 </div>
               )}
             </div>
-          ) : null}
+          )}
         </main>
 
         {/* ========================================================================= */}
